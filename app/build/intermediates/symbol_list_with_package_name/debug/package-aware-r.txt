@@ -1065,6 +1065,7 @@ string initial_balance_text
 string label_add_account
 string label_logs
 string label_manage
+string msg_account_add_failed
 string msg_account_update_unable
 string msg_ok
 string password_toggle_content_description

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.exception.AccountAlreadyExistsException;
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.exception.InsufficientBalanceException;
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.exception.InvalidAccountException;
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.model.Account;
@@ -155,7 +156,7 @@ public class DBHandler extends SQLiteOpenHelper {
 
     }
 
-    public void addAccount(Account account) {
+    public void addAccount(Account account) throws AccountAlreadyExistsException{
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
@@ -163,10 +164,16 @@ public class DBHandler extends SQLiteOpenHelper {
         values.put(KEY_BANK_NAME, account.getBankName());
         values.put(KEY_ACCOUNT_HOLDER_NAME, account.getAccountHolderName());
         values.put(KEY_BALANCE, account.getBalance());
-
-        // insert row
-        db.insert(TABLE_ACCOUNT, null, values);
-    }
+        Account acc = null;
+        try{
+            acc = getAccount(account.getAccountNo());
+        }catch (InvalidAccountException e){
+            // insert row
+            db.insert(TABLE_ACCOUNT, null, values);
+        }
+        String msg = "Account number "+account.getAccountNo()+" already exists";
+        if(acc != null)throw new AccountAlreadyExistsException(msg);
+   }
 
     public void removeAccount(String accountNo){
         SQLiteDatabase db = this.getWritableDatabase();
@@ -210,7 +217,7 @@ public class DBHandler extends SQLiteOpenHelper {
     public void logTransaction(Date date, String accountNo, ExpenseType expenseType, double amount) {
         SQLiteDatabase db = this.getWritableDatabase();
 
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         String strDate = dateFormat.format(date);
 
         ContentValues values = new ContentValues();
@@ -233,7 +240,7 @@ public class DBHandler extends SQLiteOpenHelper {
         Log.e(LOG, selectQuery);
         Cursor c = db.rawQuery(selectQuery, null);
 
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
 
         // looping through all rows and adding to list

@@ -7,6 +7,7 @@ import java.util.List;
 
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.control.ExpenseManager;
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.AccountDAO;
+import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.exception.AccountAlreadyExistsException;
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.exception.InsufficientBalanceException;
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.exception.InvalidAccountException;
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.model.Account;
@@ -36,7 +37,7 @@ public class PersistentAccountDAO implements AccountDAO {
     }
 
     @Override
-    public void addAccount(Account account) {
+    public void addAccount(Account account)throws AccountAlreadyExistsException {
         dbHandler.addAccount(account);
     }
 
