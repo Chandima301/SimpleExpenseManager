@@ -69,7 +69,6 @@ public class DBHandler extends SQLiteOpenHelper {
             + KEY_DATE + " TEXT" + ")";
 
 
-
     public DBHandler(@Nullable Context context) {
         super(context, DB_NAME, null, VERSION);
     }
@@ -95,7 +94,7 @@ public class DBHandler extends SQLiteOpenHelper {
         List<String> accountNumbers = new ArrayList<String>();
 
         SQLiteDatabase db = this.getReadableDatabase();
-        String selectQuery = "SELECT "+ KEY_ACCOUNT_NO +" FROM " + TABLE_ACCOUNT;
+        String selectQuery = "SELECT " + KEY_ACCOUNT_NO + " FROM " + TABLE_ACCOUNT;
         Log.e(LOG, selectQuery);
         Cursor c = db.rawQuery(selectQuery, null);
 
@@ -106,6 +105,7 @@ public class DBHandler extends SQLiteOpenHelper {
                 accountNumbers.add(c.getString(c.getColumnIndex(KEY_ACCOUNT_NO)));
             } while (c.moveToNext());
         }
+
         return accountNumbers;
     }
 
@@ -117,6 +117,7 @@ public class DBHandler extends SQLiteOpenHelper {
         Log.e(LOG, selectQuery);
         Cursor c = db.rawQuery(selectQuery, null);
 
+
         // looping through all rows and adding to list
         if (c.moveToFirst()) {
             do {
@@ -125,7 +126,7 @@ public class DBHandler extends SQLiteOpenHelper {
                         c.getString(c.getColumnIndex(KEY_BANK_NAME)),
                         c.getString(c.getColumnIndex(KEY_ACCOUNT_HOLDER_NAME)),
                         c.getDouble(c.getColumnIndex(KEY_BALANCE))
-                        );
+                );
                 // adding to accountNumbers list
                 accounts.add(account);
             } while (c.moveToNext());
@@ -133,7 +134,7 @@ public class DBHandler extends SQLiteOpenHelper {
         return accounts;
     }
 
-    public Account getAccount(String accountNo) throws InvalidAccountException{
+    public Account getAccount(String accountNo) throws InvalidAccountException {
         SQLiteDatabase db = this.getReadableDatabase();
 
         String selectQuery = "SELECT  * FROM " + TABLE_ACCOUNT + " WHERE "
@@ -141,7 +142,7 @@ public class DBHandler extends SQLiteOpenHelper {
         Log.e(LOG, selectQuery);
         Cursor c = db.rawQuery(selectQuery, new String[]{accountNo});
 
-        if (c != null) {
+        if (c != null && c.getCount() > 0) {
             c.moveToFirst();
             Account account = new Account(
                     c.getString(c.getColumnIndex(KEY_ACCOUNT_NO)),
@@ -149,14 +150,17 @@ public class DBHandler extends SQLiteOpenHelper {
                     c.getString(c.getColumnIndex(KEY_ACCOUNT_HOLDER_NAME)),
                     c.getDouble(c.getColumnIndex(KEY_BALANCE))
             );
+
             return account;
+
         }
+
         String msg = "Account " + accountNo + " is invalid.";
         throw new InvalidAccountException(msg);
 
     }
 
-    public void addAccount(Account account) throws AccountAlreadyExistsException{
+    public void addAccount(Account account) throws AccountAlreadyExistsException {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
@@ -165,52 +169,42 @@ public class DBHandler extends SQLiteOpenHelper {
         values.put(KEY_ACCOUNT_HOLDER_NAME, account.getAccountHolderName());
         values.put(KEY_BALANCE, account.getBalance());
         Account acc = null;
-        try{
+        try {
             acc = getAccount(account.getAccountNo());
-        }catch (InvalidAccountException e){
+        } catch (InvalidAccountException e) {
             // insert row
             db.insert(TABLE_ACCOUNT, null, values);
         }
-        String msg = "Account number "+account.getAccountNo()+" already exists";
-        if(acc != null)throw new AccountAlreadyExistsException(msg);
-   }
+        String msg = "Account number " + account.getAccountNo() + " already exists";
+        if (acc != null) throw new AccountAlreadyExistsException(msg);
 
-    public void removeAccount(String accountNo){
+    }
+
+    public void removeAccount(String accountNo) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete(TABLE_ACCOUNT, KEY_ACCOUNT_NO + " = ?",
-                new String[] {accountNo});
+                new String[]{accountNo});
     }
 
     public void updateBalance(String accountNo, ExpenseType expenseType, double amount) throws InvalidAccountException, InsufficientBalanceException {
-        SQLiteDatabase db = this.getReadableDatabase();
 
-        String selectQuery = "SELECT "+ KEY_BALANCE +" FROM " + TABLE_ACCOUNT + " WHERE "
-                + KEY_ACCOUNT_NO + " = ?";
-        Log.e(LOG, selectQuery);
-        Cursor c = db.rawQuery(selectQuery, new String[]{accountNo});
-
-        if (c != null) {
-            c.moveToFirst();
-            Double balance = c.getDouble(c.getColumnIndex(KEY_BALANCE));
-            SQLiteDatabase dbWrite = this.getWritableDatabase();
-            ContentValues values = new ContentValues();
-            switch (expenseType) {
-                case EXPENSE:
-                    String msg = "Your Account balance "+balance+" is not sufficient";
-                    if(balance-amount<0)throw new InsufficientBalanceException(msg);
-                    values.put(KEY_BALANCE, balance - amount);
-                    break;
-                case INCOME:
-                    values.put(KEY_BALANCE,  balance + amount);
-                    break;
-            }
-            // updating row
-            dbWrite.update(TABLE_ACCOUNT, values, KEY_ACCOUNT_NO + " = ?",
-                    new String[] { accountNo });
-        }else{
-            String msg = "Account " + accountNo + " is invalid.";
-            throw new InvalidAccountException(msg);
+        Account acc = getAccount(accountNo);
+        Double balance = acc.getBalance();
+        SQLiteDatabase dbWrite = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        switch (expenseType) {
+            case EXPENSE:
+                String msg = "Your Account balance " + balance + " is not sufficient";
+                if (balance - amount < 0) throw new InsufficientBalanceException(msg);
+                values.put(KEY_BALANCE, balance - amount);
+                break;
+            case INCOME:
+                values.put(KEY_BALANCE, balance + amount);
+                break;
         }
+        // updating row
+        dbWrite.update(TABLE_ACCOUNT, values, KEY_ACCOUNT_NO + " = ?",
+                new String[]{accountNo});
 
     }
 
@@ -228,7 +222,6 @@ public class DBHandler extends SQLiteOpenHelper {
 
         // insert row
         db.insert(TABLE_TRANSACTION, null, values);
-
 
     }
 
